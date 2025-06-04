@@ -1,21 +1,14 @@
 let countdownInterval;
-let tickInterval;
+let nextTriggerTime = null;
 
 document.getElementById('startButton').addEventListener('click', function () {
     let interval = parseInt(document.getElementById('intervalSelect').value);
+    nextTriggerTime = Date.now() + interval;
 
-    // Start ticking sound and countdown at the same time
-    playAudio();
-    startCountdown(interval);
-
-    // Set main repeating interval
-    tickInterval = setInterval(() => {
-        playAudio();
-        startCountdown(interval);
-    }, interval);
-
+    startCountdown(interval); // Start countdown only
     document.getElementById('startButton').disabled = true;
 });
+
 
 function playAudio() {
     const audio = document.getElementById('audio');
@@ -23,26 +16,24 @@ function playAudio() {
     audio.play();
 }
 
-function startCountdown(durationMs) {
-    // Clear any existing countdown
+function startCountdown(intervalMs) {
     clearInterval(countdownInterval);
 
-    let duration = durationMs / 1000; // convert to seconds
-    let countdownDisplay = document.getElementById('countdown');
+    countdownInterval = setInterval(() => {
+        let now = Date.now();
+        let remaining = nextTriggerTime - now;
 
-    function updateCountdown() {
-        let minutes = Math.floor(duration / 60);
-        let seconds = duration % 60;
-        countdownDisplay.textContent = 
-            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-        if (duration <= 0) {
-            clearInterval(countdownInterval);
+        if (remaining <= 0) {
+            playAudio();
+            nextTriggerTime = Date.now() + intervalMs;
+            remaining = intervalMs;
         }
 
-        duration--;
-    }
+        let totalSeconds = Math.floor(remaining / 1000);
+        let minutes = Math.floor(totalSeconds / 60);
+        let seconds = totalSeconds % 60;
 
-    updateCountdown(); // Show immediately
-    countdownInterval = setInterval(updateCountdown, 1000);
+        document.getElementById('countdown').textContent =
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }, 250); // Frequent updates keep timer accurate
 }
